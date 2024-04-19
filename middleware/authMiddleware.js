@@ -1,17 +1,15 @@
 const jwt = require('jsonwebtoken');
 
 const authenticateUser = (req, res, next) => {
-  // Get token from request headers or cookies
   const token = req.headers.authorization;
   if (!token) {
     return res.status(401).json({ message: 'No token provided' });
   }
-  // Verify token
   jwt.verify(token, 'secretkey', (err, decoded) => {
     if (err) {
       return res.status(401).json({ message: 'Invalid token' });
     }
-    // Attach user data to request object
+    console.log("decode ",decoded );
     req.user = decoded;
     next();
   });

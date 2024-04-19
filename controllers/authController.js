@@ -23,8 +23,6 @@ exports.signup = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    console.log("sign", email,password);
-
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -50,7 +48,7 @@ exports.forgotPassword = async (req, res) => {
   
       const token = generateToken();
       user.resetPasswordToken = token;
-      user.resetPasswordExpires = Date.now() + 3600000; // Token expires in 1 hour
+      user.resetPasswordExpires = Date.now() + 3600000; 
       await user.save();
   
       await sendEmail({  to: email,  subject: 'Password Reset',  text: `To reset your password, click on this link: http://localhost:3000/reset-password/${token}`});

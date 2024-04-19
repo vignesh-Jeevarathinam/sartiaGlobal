@@ -1,18 +1,30 @@
-const bcrypt = require('bcryptjs');
 const User = require('../models/User');
-const { sendEmail } = require('../services/emailService');
+const { sendNewOrderNotification } = require('../services/emailService');
 
-const addUser = async (req, res) => {
+exports.purchaseBook = async (req, res) => {
   try {
-    const { email, password, role } = req.body;
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await User.create({ email, password: hashedPassword, role });
-    // Send welcome email to the newly registered user
-    await sendEmail({ to: email, subject: 'Welcome!', text: 'Welcome to our platform!' });
-    res.status(201).json({ user });
+    const { bookId, quantity } = req.body;
+    
+    const book = await Book.findById(bookId);
+    if (!book) {
+      return res.status(404).json({ message: 'Book not found' });
+    }    
+    book.quantity -= quantity;
+    book.sales += quantity;
+    await book.save();   
+    const userId = req.user.userId; 
+    const user = await User.findById(userId);
+    user.purchaseHistory.push({
+      book: bookId,
+      quantity,
+      totalPrice: book.price * quantity,
+      purchaseDate: new Date()
+    });
+    await user.save();
+    await sendNewOrderNotification(userId, bookId, quantity)
+    res.status(200).json({ message: 'Book purchased successfully' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error purchasing book:', error);
+    res.status(500).json({ message: 'Internal server error' });
   }
 };
-
-module.exports = { addUser };
